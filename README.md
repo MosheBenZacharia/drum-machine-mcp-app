@@ -4,6 +4,8 @@ An interactive drum machine and step sequencer that runs as an [MCP App](https:/
 
 6 synthesized instruments (kick, snare, hi-hat, clap, tom, rimshot) on a 16-step grid with playback, BPM control, swing, and volume. All audio is generated via [Tone.js](https://tonejs.github.io/) synthesis — no samples needed.
 
+![Drum Machine Demo](DrumMachineDemo.gif)
+
 ## Quick Start
 
 ```bash
@@ -45,14 +47,6 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 ```
 
 Restart Claude Desktop and ask it to "play a drum pattern".
-
-## Remote Connector
-
-Deploy to any cloud provider (Railway, Fly.io, Render, etc.) and use the public URL as a custom MCP connector in Claude Desktop:
-
-```
-https://your-app.up.railway.app/mcp
-```
 
 ## Architecture
 
