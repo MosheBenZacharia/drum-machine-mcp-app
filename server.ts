@@ -11,7 +11,7 @@ const DIST_DIR = __filename.endsWith(".ts")
   ? path.join(__dirname, "dist")
   : __dirname;
 
-const stepArray = z.array(z.boolean()).length(16);
+const stepArray = z.array(z.boolean()).length(16).optional();
 
 const F = false, T = true;
 const DEFAULT_PATTERN = {
