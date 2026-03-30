@@ -14,17 +14,6 @@ export async function startStreamableHTTPServer(
   const app = createMcpExpressApp({ host: "0.0.0.0" });
   app.use(cors());
 
-  // Serve favicon as inline SVG — drum machine icon
-  const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="#0a0a0f"/><circle cx="50" cy="48" r="30" fill="none" stroke="#e74c3c" stroke-width="3"/><circle cx="50" cy="48" r="20" fill="none" stroke="#f39c12" stroke-width="2"/><circle cx="50" cy="48" r="10" fill="#2ecc71" opacity="0.8"/><rect x="20" y="78" width="8" height="3" rx="1" fill="#3498db"/><rect x="32" y="78" width="8" height="3" rx="1" fill="#9b59b6"/><rect x="44" y="78" width="8" height="3" rx="1" fill="#2ecc71"/><rect x="56" y="78" width="8" height="3" rx="1" fill="#f39c12"/><rect x="68" y="78" width="8" height="3" rx="1" fill="#e74c3c"/></svg>`;
-  app.get("/favicon.ico", (_req: Request, res: Response) => {
-    res.setHeader("Content-Type", "image/svg+xml");
-    res.send(FAVICON_SVG);
-  });
-  app.get("/favicon.svg", (_req: Request, res: Response) => {
-    res.setHeader("Content-Type", "image/svg+xml");
-    res.send(FAVICON_SVG);
-  });
-
   app.all("/mcp", async (req: Request, res: Response) => {
     const server = createServer();
     const transport = new StreamableHTTPServerTransport({
