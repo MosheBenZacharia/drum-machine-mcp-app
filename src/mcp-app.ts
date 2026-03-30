@@ -1,5 +1,5 @@
 /**
- * Drum Sequencer MCP App — UI Logic
+ * Drum Machine MCP App — UI Logic
  * Tone.js audio engine + step sequencer grid + MCP Apps SDK integration
  */
 import { App } from "@modelcontextprotocol/ext-apps";
@@ -10,6 +10,7 @@ import "./styles.css";
 
 // --- Types ---
 type InstrumentName = "hihat" | "clap" | "rimshot" | "snare" | "tom" | "kick";
+type StepState = 0 | 1 | 2; // 0=off, 1=normal, 2=accent
 
 interface DrumPattern {
   [key: string]: boolean[];
@@ -21,18 +22,105 @@ interface PatternData {
   swing?: number;
 }
 
+interface Preset {
+  bpm: number;
+  swing: number;
+  pattern: Record<InstrumentName, StepState[]>;
+}
+
 // --- Constants ---
 const INSTRUMENTS: InstrumentName[] = ["hihat", "clap", "rimshot", "snare", "tom", "kick"];
 const STEPS = 16;
+const ACCENT_VELOCITY = 1.0;
+const NORMAL_VELOCITY = 0.6;
+
+// --- Genre Presets ---
+const _ = 0, x = 1, X = 2; // shorthand: off, normal, accent
+const PRESETS: Record<string, Preset> = {
+  "boom-bap": {
+    bpm: 90, swing: 0.3,
+    pattern: {
+      hihat:   [x,_,x,_, x,_,x,_, x,_,x,_, x,_,x,_],
+      clap:    [_,_,_,_, X,_,_,_, _,_,_,_, X,_,_,_],
+      rimshot: [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
+      snare:   [_,_,_,_, x,_,_,_, _,_,_,_, x,_,_,_],
+      tom:     [_,_,_,_, _,_,_,_, _,_,_,x, _,_,_,_],
+      kick:    [X,_,_,_, _,_,x,_, X,_,_,_, _,_,x,_],
+    },
+  },
+  "house": {
+    bpm: 124, swing: 0,
+    pattern: {
+      hihat:   [_,_,x,_, _,_,x,_, _,_,x,_, _,_,x,_],
+      clap:    [_,_,_,_, X,_,_,_, _,_,_,_, X,_,_,_],
+      rimshot: [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
+      snare:   [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
+      tom:     [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
+      kick:    [X,_,_,_, X,_,_,_, X,_,_,_, X,_,_,_],
+    },
+  },
+  "techno": {
+    bpm: 135, swing: 0,
+    pattern: {
+      hihat:   [x,_,x,_, x,_,x,_, x,_,x,_, x,_,x,_],
+      clap:    [_,_,_,_, X,_,_,_, _,_,_,_, X,_,_,x],
+      rimshot: [_,_,x,_, _,_,_,x, _,_,x,_, _,_,_,x],
+      snare:   [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
+      tom:     [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
+      kick:    [X,_,_,_, X,_,_,_, X,_,_,_, X,_,_,_],
+    },
+  },
+  "reggaeton": {
+    bpm: 95, swing: 0,
+    pattern: {
+      hihat:   [x,_,_,x, _,_,x,_, _,x,_,_, x,_,_,x],
+      clap:    [_,_,_,_, X,_,_,_, _,_,_,_, X,_,_,_],
+      rimshot: [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
+      snare:   [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
+      tom:     [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
+      kick:    [X,_,_,x, _,_,x,_, X,_,_,x, _,_,x,_],
+    },
+  },
+  "dnb": {
+    bpm: 174, swing: 0,
+    pattern: {
+      hihat:   [x,_,x,x, _,_,x,_, x,_,x,x, _,_,x,_],
+      clap:    [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
+      rimshot: [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
+      snare:   [_,_,_,_, X,_,_,_, _,_,_,_, X,_,_,x],
+      tom:     [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
+      kick:    [X,_,_,_, _,_,_,_, _,_,x,_, _,_,_,_],
+    },
+  },
+  "rock": {
+    bpm: 120, swing: 0,
+    pattern: {
+      hihat:   [X,_,x,_, X,_,x,_, X,_,x,_, X,_,x,_],
+      clap:    [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
+      rimshot: [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
+      snare:   [_,_,_,_, X,_,_,_, _,_,_,_, X,_,_,_],
+      tom:     [_,_,_,_, _,_,_,_, _,_,_,_, _,_,x,x],
+      kick:    [X,_,_,_, _,_,X,_, X,_,_,_, _,_,_,_],
+    },
+  },
+};
 
 // --- State ---
-const pattern: Record<InstrumentName, boolean[]> = {
-  hihat:   new Array(STEPS).fill(false),
-  clap:    new Array(STEPS).fill(false),
-  rimshot: new Array(STEPS).fill(false),
-  snare:   new Array(STEPS).fill(false),
-  tom:     new Array(STEPS).fill(false),
-  kick:    new Array(STEPS).fill(false),
+const pattern: Record<InstrumentName, StepState[]> = {
+  hihat:   new Array(STEPS).fill(0),
+  clap:    new Array(STEPS).fill(0),
+  rimshot: new Array(STEPS).fill(0),
+  snare:   new Array(STEPS).fill(0),
+  tom:     new Array(STEPS).fill(0),
+  kick:    new Array(STEPS).fill(0),
+};
+
+const muted: Record<InstrumentName, boolean> = {
+  hihat: false, clap: false, rimshot: false, snare: false, tom: false, kick: false,
+};
+
+const soloed: Record<InstrumentName, boolean> = {
+  hihat: false, clap: false, rimshot: false, snare: false, tom: false, kick: false,
 };
 
 let currentStep = -1;
@@ -40,6 +128,7 @@ let isPlaying = false;
 let currentBPM = 120;
 let currentSwing = 0;
 let sequenceId: number | null = null;
+let anySoloed = false;
 
 // --- DOM References ---
 const gridEl = document.getElementById("sequencer-grid")!;
@@ -53,6 +142,8 @@ const bpmUp = document.getElementById("bpm-up")!;
 const swingSlider = document.getElementById("swing-slider") as HTMLInputElement;
 const swingValue = document.getElementById("swing-value")!;
 const volumeSlider = document.getElementById("volume-slider") as HTMLInputElement;
+const presetSelect = document.getElementById("preset-select") as HTMLSelectElement;
+const oscilloscopeCanvas = document.getElementById("oscilloscope") as HTMLCanvasElement;
 
 // Pad element references: padEls[instrument][step]
 const padEls: Record<InstrumentName, HTMLElement[]> = {
@@ -63,14 +154,21 @@ const padEls: Record<InstrumentName, HTMLElement[]> = {
 let kickSynth: InstanceType<typeof Tone.MembraneSynth>;
 let snareSynth: InstanceType<typeof Tone.NoiseSynth>;
 let snareBody: InstanceType<typeof Tone.MembraneSynth>;
-let hihatSynth: InstanceType<typeof Tone.MetalSynth>;
+let hihatSynth: InstanceType<typeof Tone.NoiseSynth>;
 let clapSynth: InstanceType<typeof Tone.NoiseSynth>;
 let tomSynth: InstanceType<typeof Tone.MembraneSynth>;
 let rimshotSynth: InstanceType<typeof Tone.NoiseSynth>;
 let masterVol: InstanceType<typeof Tone.Volume>;
+let analyser: AnalyserNode;
 
 function initAudio() {
   masterVol = new Tone.Volume(-6).toDestination();
+
+  // Create analyser for oscilloscope
+  const ctx = Tone.getContext().rawContext as AudioContext;
+  analyser = ctx.createAnalyser();
+  analyser.fftSize = 256;
+  masterVol.connect(analyser as unknown as AudioNode);
 
   kickSynth = new Tone.MembraneSynth({
     pitchDecay: 0.05,
@@ -91,15 +189,12 @@ function initAudio() {
     envelope: { attack: 0.001, decay: 0.15, sustain: 0, release: 0.05 },
   }).connect(masterVol);
 
-  hihatSynth = new Tone.MetalSynth({
-    frequency: 400,
-    envelope: { attack: 0.001, decay: 0.08, release: 0.01 },
-    harmonicity: 5.1,
-    modulationIndex: 32,
-    resonance: 4000,
-    octaves: 1.5,
-  }).connect(masterVol);
-  hihatSynth.volume.value = -6;
+  const hihatFilter = new Tone.Filter({ frequency: 8000, type: "highpass", Q: 0.5 }).connect(masterVol);
+  hihatSynth = new Tone.NoiseSynth({
+    noise: { type: "white" },
+    envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.02 },
+  }).connect(hihatFilter);
+  hihatSynth.volume.value = 4;
 
   const clapFilter = new Tone.Filter({ frequency: 2500, type: "bandpass", Q: 2 }).connect(masterVol);
   clapSynth = new Tone.NoiseSynth({
@@ -108,41 +203,53 @@ function initAudio() {
   }).connect(clapFilter);
 
   tomSynth = new Tone.MembraneSynth({
-    pitchDecay: 0.04,
-    octaves: 4,
+    pitchDecay: 0.08,
+    octaves: 3,
     oscillator: { type: "sine" },
-    envelope: { attack: 0.001, decay: 0.25, sustain: 0, release: 0.1 },
+    envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.1 },
   }).connect(masterVol);
 
-  const rimshotFilter = new Tone.Filter({ frequency: 5000, type: "bandpass", Q: 3 }).connect(masterVol);
+  const rimshotFilter = new Tone.Filter({ frequency: 4000, type: "bandpass", Q: 1 }).connect(masterVol);
   rimshotSynth = new Tone.NoiseSynth({
-    noise: { type: "pink" },
-    envelope: { attack: 0.001, decay: 0.04, sustain: 0, release: 0.02 },
+    noise: { type: "white" },
+    envelope: { attack: 0.001, decay: 0.07, sustain: 0, release: 0.03 },
   }).connect(rimshotFilter);
+  rimshotSynth.volume.value = 6;
 }
 
-function triggerInstrument(name: InstrumentName, time: number) {
+function triggerInstrument(name: InstrumentName, time: number, velocity: number) {
   switch (name) {
     case "kick":
-      kickSynth.triggerAttackRelease("C1", "8n", time);
+      kickSynth.triggerAttackRelease("C1", "8n", time, velocity);
       break;
     case "snare":
-      snareBody.triggerAttackRelease("E2", "16n", time);
-      snareSynth.triggerAttackRelease("16n", time);
+      snareBody.triggerAttackRelease("E2", "16n", time, velocity);
+      snareSynth.triggerAttackRelease("16n", time, velocity);
       break;
     case "hihat":
-      hihatSynth.triggerAttackRelease("16n", time, 0.5);
+      hihatSynth.triggerAttackRelease("32n", time, velocity);
       break;
     case "clap":
-      clapSynth.triggerAttackRelease("16n", time);
+      clapSynth.triggerAttackRelease("16n", time, velocity);
       break;
     case "tom":
-      tomSynth.triggerAttackRelease("A1", "8n", time);
+      tomSynth.triggerAttackRelease("G2", "8n", time, velocity);
       break;
     case "rimshot":
-      rimshotSynth.triggerAttackRelease("32n", time);
+      rimshotSynth.triggerAttackRelease("32n", time, velocity);
       break;
   }
+}
+
+// --- Solo/Mute Logic ---
+function isInstrumentAudible(inst: InstrumentName): boolean {
+  if (muted[inst]) return false;
+  if (anySoloed && !soloed[inst]) return false;
+  return true;
+}
+
+function updateAnySoloed() {
+  anySoloed = INSTRUMENTS.some(inst => soloed[inst]);
 }
 
 // --- Build the Sequencer Grid ---
@@ -170,6 +277,35 @@ function buildGrid() {
     const row = document.createElement("div");
     row.className = `instrument-row row-${inst}`;
 
+    // Solo/Mute buttons
+    const smContainer = document.createElement("div");
+    smContainer.className = "solo-mute";
+
+    const soloBtn = document.createElement("button");
+    soloBtn.className = "sm-btn solo-btn";
+    soloBtn.textContent = "S";
+    soloBtn.title = "Solo";
+    soloBtn.addEventListener("click", () => {
+      soloed[inst] = !soloed[inst];
+      soloBtn.classList.toggle("active", soloed[inst]);
+      updateAnySoloed();
+      updateRowDimming();
+    });
+
+    const muteBtn = document.createElement("button");
+    muteBtn.className = "sm-btn mute-btn";
+    muteBtn.textContent = "M";
+    muteBtn.title = "Mute";
+    muteBtn.addEventListener("click", () => {
+      muted[inst] = !muted[inst];
+      muteBtn.classList.toggle("active", muted[inst]);
+      updateRowDimming();
+    });
+
+    smContainer.appendChild(soloBtn);
+    smContainer.appendChild(muteBtn);
+    row.appendChild(smContainer);
+
     const label = document.createElement("div");
     label.className = "instrument-label";
     label.textContent = inst;
@@ -181,7 +317,6 @@ function buildGrid() {
     padEls[inst] = [];
 
     for (let s = 0; s < STEPS; s++) {
-      // Insert spacer before beats 5, 9, 13
       if (s > 0 && s % 4 === 0) {
         const spacer = document.createElement("div");
         spacer.className = "pad-spacer";
@@ -190,11 +325,28 @@ function buildGrid() {
 
       const pad = document.createElement("div");
       pad.className = "pad";
-      if (pattern[inst][s]) pad.classList.add("active");
+      applyPadState(pad, pattern[inst][s]);
 
-      pad.addEventListener("click", () => {
-        pattern[inst][s] = !pattern[inst][s];
-        pad.classList.toggle("active");
+      pad.addEventListener("click", (e) => {
+        const isShift = e.shiftKey;
+        const current = pattern[inst][s];
+
+        if (current === 0) {
+          // Off -> normal or accent
+          pattern[inst][s] = isShift ? 2 : 1;
+        } else if (current === 1 && isShift) {
+          // Normal + shift -> accent
+          pattern[inst][s] = 2;
+        } else if (current === 2 && isShift) {
+          // Accent + shift -> normal
+          pattern[inst][s] = 1;
+        } else {
+          // Active -> off
+          pattern[inst][s] = 0;
+        }
+
+        applyPadState(pad, pattern[inst][s]);
+        presetSelect.value = "custom";
         syncToModel();
       });
 
@@ -207,18 +359,78 @@ function buildGrid() {
   }
 }
 
+function applyPadState(pad: HTMLElement, state: StepState) {
+  pad.classList.remove("active", "accent");
+  if (state === 1) pad.classList.add("active");
+  if (state === 2) pad.classList.add("active", "accent");
+}
+
+function updateRowDimming() {
+  for (const inst of INSTRUMENTS) {
+    const row = document.querySelector(`.row-${inst}`) as HTMLElement;
+    if (row) {
+      row.classList.toggle("dimmed", !isInstrumentAudible(inst));
+    }
+  }
+}
+
+// --- Oscilloscope ---
+function drawOscilloscope() {
+  const ctx = oscilloscopeCanvas.getContext("2d")!;
+  const bufferLength = analyser.frequencyBinCount;
+  const dataArray = new Uint8Array(bufferLength);
+
+  function draw() {
+    requestAnimationFrame(draw);
+
+    // Match canvas resolution to its CSS size
+    const rect = oscilloscopeCanvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const w = rect.width * dpr;
+    const h = rect.height * dpr;
+    if (oscilloscopeCanvas.width !== w || oscilloscopeCanvas.height !== h) {
+      oscilloscopeCanvas.width = w;
+      oscilloscopeCanvas.height = h;
+    }
+
+    analyser.getByteTimeDomainData(dataArray);
+    ctx.clearRect(0, 0, w, h);
+
+    ctx.lineWidth = 1.5 * dpr;
+    ctx.strokeStyle = "#2ecc71";
+    ctx.shadowColor = "#2ecc71";
+    ctx.shadowBlur = 4 * dpr;
+    ctx.beginPath();
+
+    const sliceWidth = w / bufferLength;
+    let xPos = 0;
+
+    for (let i = 0; i < bufferLength; i++) {
+      const v = dataArray[i] / 128.0;
+      const y = (v * h) / 2;
+      if (i === 0) ctx.moveTo(xPos, y);
+      else ctx.lineTo(xPos, y);
+      xPos += sliceWidth;
+    }
+
+    ctx.lineTo(w, h / 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  draw();
+}
+
 // --- Playhead & Step Sequencing ---
 function stepCallback(time: number, step: number) {
-  // Schedule audio triggers
   for (const inst of INSTRUMENTS) {
-    if (pattern[inst][step]) {
-      triggerInstrument(inst, time);
+    if (pattern[inst][step] && isInstrumentAudible(inst)) {
+      const velocity = pattern[inst][step] === 2 ? ACCENT_VELOCITY : NORMAL_VELOCITY;
+      triggerInstrument(inst, time, velocity);
     }
   }
 
-  // Update UI on the main thread
   Tone.getDraw().schedule(() => {
-    // Clear previous step highlight
     if (currentStep >= 0) {
       for (const inst of INSTRUMENTS) {
         padEls[inst][currentStep].classList.remove("current-step");
@@ -227,14 +439,12 @@ function stepCallback(time: number, step: number) {
 
     currentStep = step;
 
-    // Apply new step highlight + flash
     for (const inst of INSTRUMENTS) {
       const pad = padEls[inst][step];
       pad.classList.add("current-step");
 
       if (pattern[inst][step]) {
         pad.classList.remove("flash");
-        // Force reflow to restart animation
         void pad.offsetWidth;
         pad.classList.add("flash");
       }
@@ -250,7 +460,7 @@ function startPlayback() {
   Tone.getTransport().swingSubdivision = "16n";
 
   let step = 0;
-  sequenceId = Tone.getTransport().scheduleRepeat((time) => {
+  sequenceId = Tone.getTransport().scheduleRepeat((time: number) => {
     stepCallback(time, step % STEPS);
     step++;
   }, "16n");
@@ -269,7 +479,6 @@ function stopPlayback() {
     sequenceId = null;
   }
 
-  // Clear playhead
   if (currentStep >= 0) {
     for (const inst of INSTRUMENTS) {
       padEls[inst][currentStep].classList.remove("current-step", "flash");
@@ -321,14 +530,34 @@ function setVolume(pct: number) {
 function clearAll() {
   for (const inst of INSTRUMENTS) {
     for (let s = 0; s < STEPS; s++) {
-      pattern[inst][s] = false;
-      padEls[inst][s].classList.remove("active");
+      pattern[inst][s] = 0;
+      applyPadState(padEls[inst][s], 0);
+    }
+  }
+  presetSelect.value = "custom";
+  syncToModel();
+}
+
+function loadPreset(name: string) {
+  const preset = PRESETS[name];
+  if (!preset) return;
+
+  setBPM(preset.bpm);
+  setSwing(preset.swing);
+
+  for (const inst of INSTRUMENTS) {
+    const steps = preset.pattern[inst];
+    for (let s = 0; s < STEPS; s++) {
+      pattern[inst][s] = steps[s];
+      if (padEls[inst][s]) {
+        applyPadState(padEls[inst][s], steps[s]);
+      }
     }
   }
   syncToModel();
 }
 
-// --- Load Pattern Data ---
+// --- Load Pattern Data (from MCP tool) ---
 function loadPattern(data: PatternData) {
   if (data.bpm != null) setBPM(data.bpm);
   if (data.swing != null) setSwing(data.swing);
@@ -337,9 +566,10 @@ function loadPattern(data: PatternData) {
       const steps = data.pattern[inst];
       if (Array.isArray(steps)) {
         for (let s = 0; s < STEPS; s++) {
-          pattern[inst][s] = !!steps[s];
+          // MCP sends booleans, convert to StepState
+          pattern[inst][s] = steps[s] ? 1 : 0;
           if (padEls[inst][s]) {
-            padEls[inst][s].classList.toggle("active", pattern[inst][s]);
+            applyPadState(padEls[inst][s], pattern[inst][s]);
           }
         }
       }
@@ -379,8 +609,15 @@ volumeSlider.addEventListener("input", () => {
   updateSliderFill(volumeSlider);
 });
 
+presetSelect.addEventListener("change", () => {
+  const val = presetSelect.value;
+  if (val !== "custom") {
+    loadPreset(val);
+  }
+});
+
 // --- MCP App SDK ---
-const app = new App({ name: "Drum Sequencer", version: "1.0.0" });
+const app = new App({ name: "Drum Machine", version: "1.0.0" });
 
 app.onteardown = async () => {
   stopPlayback();
@@ -408,16 +645,16 @@ app.ontoolinputpartial = (params) => {
         const steps = partial.pattern[inst];
         if (Array.isArray(steps)) {
           for (let s = 0; s < steps.length && s < STEPS; s++) {
-            pattern[inst][s] = !!steps[s];
+            pattern[inst][s] = steps[s] ? 1 : 0;
             if (padEls[inst][s]) {
-              padEls[inst][s].classList.toggle("active", pattern[inst][s]);
+              applyPadState(padEls[inst][s], pattern[inst][s]);
             }
           }
         }
       }
     }
   } catch {
-    // Partial JSON may be incomplete — ignore parse errors
+    // Partial JSON may be incomplete
   }
 };
 
@@ -456,7 +693,11 @@ buildGrid();
 setVolume(75);
 updateSliderFill(swingSlider);
 updateSliderFill(volumeSlider);
+drawOscilloscope();
+
+// Load default preset
+loadPreset("boom-bap");
 
 app.connect().then(() => {
-  // Host connected — context is handled via ontoolinput/ontoolresult
+  // Host connected
 });

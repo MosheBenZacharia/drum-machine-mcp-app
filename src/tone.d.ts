@@ -3,14 +3,14 @@ declare namespace Tone {
   class MembraneSynth {
     constructor(options?: Record<string, unknown>);
     connect(dest: unknown): this;
-    triggerAttackRelease(note: string, duration: string, time?: number): this;
+    triggerAttackRelease(note: string, duration: string, time?: number, velocity?: number): this;
     volume: { value: number };
     dispose(): void;
   }
   class NoiseSynth {
     constructor(options?: Record<string, unknown>);
     connect(dest: unknown): this;
-    triggerAttackRelease(duration: string, time?: number): this;
+    triggerAttackRelease(duration: string, time?: number, velocity?: number): this;
     volume: { value: number };
     dispose(): void;
   }
@@ -24,6 +24,7 @@ declare namespace Tone {
   class Volume {
     constructor(volume?: number);
     toDestination(): Volume;
+    connect(dest: unknown): this;
     volume: { value: number };
     dispose(): void;
   }
@@ -35,6 +36,7 @@ declare namespace Tone {
   function start(): Promise<void>;
   function getTransport(): Transport;
   function getDraw(): Draw;
+  function getContext(): { rawContext: unknown };
 
   interface Transport {
     bpm: { value: number };

@@ -97,28 +97,57 @@ body {
   flex-wrap: wrap;
 }
 
-.header-title {
-  font-family: 'Orbitron', sans-serif;
-  font-weight: 900;
-  font-size: 18px;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  background: linear-gradient(135deg, #fff 0%, #a8a4c0 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: none;
-  position: relative;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
 }
 
-.header-title::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+/* Genre Preset Select */
+.preset-select {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  background: var(--bg-cell);
+  color: var(--text-primary);
+  border: 1px solid var(--border-glow);
+  border-radius: 6px;
+  padding: 8px 28px 8px 12px;
+  cursor: pointer;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236a6880'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  transition: border-color 0.15s ease;
+}
+
+.preset-select:hover {
+  border-color: rgba(255,255,255,0.2);
+}
+
+.preset-select:focus {
+  border-color: rgba(255,255,255,0.3);
+}
+
+.preset-select option {
+  background: var(--bg-panel);
+  color: var(--text-primary);
+}
+
+/* Oscilloscope */
+#oscilloscope {
+  flex: 1;
+  min-width: 80px;
+  height: 36px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .header-controls {
@@ -201,6 +230,53 @@ body {
   display: flex;
   align-items: center;
   gap: var(--pad-gap);
+}
+
+/* Solo/Mute Buttons */
+.solo-mute {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.sm-btn {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.sm-btn:hover {
+  border-color: rgba(255,255,255,0.2);
+  color: var(--text-primary);
+}
+
+.solo-btn.active {
+  background: rgba(243, 156, 18, 0.25);
+  border-color: rgba(243, 156, 18, 0.5);
+  color: #f39c12;
+}
+
+.mute-btn.active {
+  background: rgba(231, 76, 60, 0.25);
+  border-color: rgba(231, 76, 60, 0.5);
+  color: #e74c3c;
+}
+
+/* Dimmed row (muted or not soloed) */
+.instrument-row.dimmed {
+  opacity: 0.3;
 }
 
 .instrument-label {
@@ -343,6 +419,26 @@ body {
     inset 0 0 8px rgba(255, 255, 255, 0.15);
 }
 
+/* --- Accent Pad States (brighter + dot indicator) --- */
+.pad.accent::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+}
+
+.row-kick .pad.accent    { filter: brightness(1.25); }
+.row-snare .pad.accent   { filter: brightness(1.25); }
+.row-hihat .pad.accent   { filter: brightness(1.25); }
+.row-clap .pad.accent    { filter: brightness(1.25); }
+.row-tom .pad.accent     { filter: brightness(1.25); }
+.row-rimshot .pad.accent { filter: brightness(1.25); }
+
 /* === PLAYHEAD (current step highlight) === */
 .pad.current-step {
   box-shadow:
@@ -482,6 +578,14 @@ body {
   background: rgba(231, 76, 60, 0.06);
 }
 
+/* Hint text */
+.hint-text {
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  opacity: 0.5;
+}
+
 /* Volume */
 .volume-control {
   display: flex;
@@ -546,7 +650,7 @@ body {
     6px
     1fr 1fr 1fr 1fr;
   gap: var(--pad-gap);
-  padding-left: calc(var(--label-width) + var(--pad-gap));
+  padding-left: calc(38px + var(--label-width) + var(--pad-gap) + var(--pad-gap));
   margin-bottom: 4px;
 }
 
@@ -580,9 +684,13 @@ body {
     align-items: flex-start;
   }
 
-  .header-title {
-    font-size: 14px;
-    letter-spacing: 3px;
+  .preset-select {
+    font-size: 9px;
+  }
+
+  #oscilloscope {
+    width: 80px;
+    height: 28px;
   }
 
   #sequencer-grid {
@@ -615,8 +723,16 @@ body {
     --pad-gap: 2px;
   }
 
-  .header-title {
-    font-size: 12px;
+  .solo-mute {
+    display: none;
+  }
+
+  #oscilloscope {
+    display: none;
+  }
+
+  .hint-text {
+    display: none;
   }
 
   .bpm-display {
