@@ -35,8 +35,8 @@ export function createServer(): McpServer {
   registerAppTool(server,
     "play-drum-pattern",
     {
-      title: "Drum Sequencer",
-      description: "Create and play an interactive drum beat pattern with kick, snare, hi-hat, and more. Renders a step sequencer grid where users can toggle beats and control playback.",
+      title: "Drum Machine",
+      description: "Interactive drum machine and step sequencer. Use this when the user wants to create, play, or explore drum patterns, beats, or rhythms. Supports kick, snare, hi-hat, open hi-hat, clap, rimshot, and tom across a 16-step grid with adjustable BPM and swing. Great for music production, beat-making, learning rhythm patterns, or just having fun.",
       inputSchema: {
         bpm: z.number().min(40).max(200).default(120).describe("Tempo in beats per minute (40-200)"),
         pattern: z.object({
@@ -47,7 +47,7 @@ export function createServer(): McpServer {
           clap: stepArray,
           tom: stepArray,
           rimshot: stepArray,
-        }).default(DEFAULT_PATTERN).describe("Preset pattern. Keys are instrument names, values are arrays of 16 booleans."),
+        }).default(DEFAULT_PATTERN).describe("Drum pattern. Keys: kick, snare, hihat, openhat, clap, tom, rimshot. Values: arrays of 16 booleans (one per 16th note step)."),
         swing: z.number().min(0).max(1).default(0).describe("Swing amount (0-1, where 0 is straight and 1 is full shuffle)"),
       },
       _meta: { ui: { resourceUri } },
