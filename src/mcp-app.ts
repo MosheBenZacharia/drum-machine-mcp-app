@@ -9,7 +9,7 @@ import "./styles.css";
 // Types declared in src/tone.d.ts
 
 // --- Types ---
-type InstrumentName = "hihat" | "clap" | "rimshot" | "snare" | "tom" | "kick";
+type InstrumentName = "hihat" | "openhat" | "clap" | "rimshot" | "snare" | "tom" | "kick";
 type StepState = 0 | 1 | 2; // 0=off, 1=normal, 2=accent
 
 interface DrumPattern {
@@ -29,7 +29,7 @@ interface Preset {
 }
 
 // --- Constants ---
-const INSTRUMENTS: InstrumentName[] = ["hihat", "clap", "rimshot", "snare", "tom", "kick"];
+const INSTRUMENTS: InstrumentName[] = ["hihat", "openhat", "clap", "rimshot", "snare", "tom", "kick"];
 const STEPS = 16;
 const ACCENT_VELOCITY = 1.0;
 const NORMAL_VELOCITY = 0.6;
@@ -41,6 +41,7 @@ const PRESETS: Record<string, Preset> = {
     bpm: 90, swing: 0.3,
     pattern: {
       hihat:   [x,_,x,_, x,_,x,_, x,_,x,_, x,_,x,_],
+      openhat: [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
       clap:    [_,_,_,_, X,_,_,_, _,_,_,_, X,_,_,_],
       rimshot: [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
       snare:   [_,_,_,_, x,_,_,_, _,_,_,_, x,_,_,_],
@@ -52,6 +53,7 @@ const PRESETS: Record<string, Preset> = {
     bpm: 124, swing: 0,
     pattern: {
       hihat:   [_,_,x,_, _,_,x,_, _,_,x,_, _,_,x,_],
+      openhat: [_,_,_,_, _,_,_,x, _,_,_,_, _,_,_,x],
       clap:    [_,_,_,_, X,_,_,_, _,_,_,_, X,_,_,_],
       rimshot: [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
       snare:   [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
@@ -63,6 +65,7 @@ const PRESETS: Record<string, Preset> = {
     bpm: 135, swing: 0,
     pattern: {
       hihat:   [x,_,x,_, x,_,x,_, x,_,x,_, x,_,x,_],
+      openhat: [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
       clap:    [_,_,_,_, X,_,_,_, _,_,_,_, X,_,_,x],
       rimshot: [_,_,x,_, _,_,_,x, _,_,x,_, _,_,_,x],
       snare:   [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
@@ -74,6 +77,7 @@ const PRESETS: Record<string, Preset> = {
     bpm: 95, swing: 0,
     pattern: {
       hihat:   [x,_,_,x, _,_,x,_, _,x,_,_, x,_,_,x],
+      openhat: [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
       clap:    [_,_,_,_, X,_,_,_, _,_,_,_, X,_,_,_],
       rimshot: [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
       snare:   [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
@@ -85,6 +89,7 @@ const PRESETS: Record<string, Preset> = {
     bpm: 174, swing: 0,
     pattern: {
       hihat:   [x,_,x,x, _,_,x,_, x,_,x,x, _,_,x,_],
+      openhat: [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,x],
       clap:    [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
       rimshot: [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
       snare:   [_,_,_,_, X,_,_,_, _,_,_,_, X,_,_,x],
@@ -96,6 +101,7 @@ const PRESETS: Record<string, Preset> = {
     bpm: 120, swing: 0,
     pattern: {
       hihat:   [X,_,x,_, X,_,x,_, X,_,x,_, X,_,x,_],
+      openhat: [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
       clap:    [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
       rimshot: [_,_,_,_, _,_,_,_, _,_,_,_, _,_,_,_],
       snare:   [_,_,_,_, X,_,_,_, _,_,_,_, X,_,_,_],
@@ -108,6 +114,7 @@ const PRESETS: Record<string, Preset> = {
 // --- State ---
 const pattern: Record<InstrumentName, StepState[]> = {
   hihat:   new Array(STEPS).fill(0),
+  openhat: new Array(STEPS).fill(0),
   clap:    new Array(STEPS).fill(0),
   rimshot: new Array(STEPS).fill(0),
   snare:   new Array(STEPS).fill(0),
@@ -116,11 +123,11 @@ const pattern: Record<InstrumentName, StepState[]> = {
 };
 
 const muted: Record<InstrumentName, boolean> = {
-  hihat: false, clap: false, rimshot: false, snare: false, tom: false, kick: false,
+  hihat: false, openhat: false, clap: false, rimshot: false, snare: false, tom: false, kick: false,
 };
 
 const soloed: Record<InstrumentName, boolean> = {
-  hihat: false, clap: false, rimshot: false, snare: false, tom: false, kick: false,
+  hihat: false, openhat: false, clap: false, rimshot: false, snare: false, tom: false, kick: false,
 };
 
 let currentStep = -1;
@@ -147,7 +154,7 @@ const oscilloscopeCanvas = document.getElementById("oscilloscope") as HTMLCanvas
 
 // Pad element references: padEls[instrument][step]
 const padEls: Record<InstrumentName, HTMLElement[]> = {
-  hihat: [], clap: [], rimshot: [], snare: [], tom: [], kick: [],
+  hihat: [], openhat: [], clap: [], rimshot: [], snare: [], tom: [], kick: [],
 };
 
 // --- Audio Engine (Tone.js) ---
@@ -155,6 +162,7 @@ let kickSynth: InstanceType<typeof Tone.MembraneSynth>;
 let snareSynth: InstanceType<typeof Tone.NoiseSynth>;
 let snareBody: InstanceType<typeof Tone.MembraneSynth>;
 let hihatSynth: InstanceType<typeof Tone.NoiseSynth>;
+let openhatSynth: InstanceType<typeof Tone.NoiseSynth>;
 let clapSynth: InstanceType<typeof Tone.NoiseSynth>;
 let tomSynth: InstanceType<typeof Tone.MembraneSynth>;
 let rimshotSynth: InstanceType<typeof Tone.NoiseSynth>;
@@ -196,6 +204,13 @@ function initAudio() {
   }).connect(hihatFilter);
   hihatSynth.volume.value = 4;
 
+  const openhatFilter = new Tone.Filter({ frequency: 6000, type: "highpass", Q: 0.5 }).connect(masterVol);
+  openhatSynth = new Tone.NoiseSynth({
+    noise: { type: "white" },
+    envelope: { attack: 0.001, decay: 0.3, sustain: 0.05, release: 0.15 },
+  }).connect(openhatFilter);
+  openhatSynth.volume.value = 2;
+
   const clapFilter = new Tone.Filter({ frequency: 2500, type: "bandpass", Q: 2 }).connect(masterVol);
   clapSynth = new Tone.NoiseSynth({
     noise: { type: "white" },
@@ -228,6 +243,9 @@ function triggerInstrument(name: InstrumentName, time: number, velocity: number)
       break;
     case "hihat":
       hihatSynth.triggerAttackRelease("32n", time, velocity);
+      break;
+    case "openhat":
+      openhatSynth.triggerAttackRelease("8n", time, velocity);
       break;
     case "clap":
       clapSynth.triggerAttackRelease("16n", time, velocity);

@@ -19,6 +19,7 @@
   --neon-kick:    #e74c3c;
   --neon-snare:   #f39c12;
   --neon-hihat:   #2ecc71;
+  --neon-openhat: #f1c40f;
   --neon-clap:    #9b59b6;
   --neon-tom:     #3498db;
   --neon-rimshot: #1abc9c;
@@ -27,6 +28,7 @@
   --dim-kick:    #3d1418;
   --dim-snare:   #3d2a0a;
   --dim-hihat:   #0e3d1e;
+  --dim-openhat: #3d3408;
   --dim-clap:    #2a1738;
   --dim-tom:     #0e2238;
   --dim-rimshot: #0a3028;
@@ -296,6 +298,7 @@ body {
 .row-kick    .instrument-label { color: color-mix(in srgb, var(--neon-kick) 60%, var(--text-dim)); }
 .row-snare   .instrument-label { color: color-mix(in srgb, var(--neon-snare) 60%, var(--text-dim)); }
 .row-hihat   .instrument-label { color: color-mix(in srgb, var(--neon-hihat) 60%, var(--text-dim)); }
+.row-openhat .instrument-label { color: color-mix(in srgb, var(--neon-openhat) 60%, var(--text-dim)); }
 .row-clap    .instrument-label { color: color-mix(in srgb, var(--neon-clap) 60%, var(--text-dim)); }
 .row-tom     .instrument-label { color: color-mix(in srgb, var(--neon-tom) 60%, var(--text-dim)); }
 .row-rimshot .instrument-label { color: color-mix(in srgb, var(--neon-rimshot) 60%, var(--text-dim)); }
@@ -360,6 +363,7 @@ body {
 .row-kick    .pad { background: var(--dim-kick);    border-color: rgba(231, 76, 60, 0.1); }
 .row-snare   .pad { background: var(--dim-snare);   border-color: rgba(243, 156, 18, 0.1); }
 .row-hihat   .pad { background: var(--dim-hihat);   border-color: rgba(46, 204, 113, 0.1); }
+.row-openhat .pad { background: var(--dim-openhat); border-color: rgba(241, 196, 15, 0.1); }
 .row-clap    .pad { background: var(--dim-clap);    border-color: rgba(155, 89, 182, 0.1); }
 .row-tom     .pad { background: var(--dim-tom);     border-color: rgba(52, 152, 219, 0.1); }
 .row-rimshot .pad { background: var(--dim-rimshot); border-color: rgba(26, 188, 156, 0.1); }
@@ -389,6 +393,15 @@ body {
   box-shadow:
     0 0 8px rgba(46, 204, 113, 0.6),
     0 0 20px rgba(46, 204, 113, 0.3),
+    inset 0 0 8px rgba(255, 255, 255, 0.15);
+}
+
+.row-openhat .pad.active {
+  background: var(--neon-openhat);
+  border-color: var(--neon-openhat);
+  box-shadow:
+    0 0 8px rgba(241, 196, 15, 0.6),
+    0 0 20px rgba(241, 196, 15, 0.3),
     inset 0 0 8px rgba(255, 255, 255, 0.15);
 }
 
@@ -435,6 +448,7 @@ body {
 .row-kick .pad.accent    { filter: brightness(1.25); }
 .row-snare .pad.accent   { filter: brightness(1.25); }
 .row-hihat .pad.accent   { filter: brightness(1.25); }
+.row-openhat .pad.accent { filter: brightness(1.25); }
 .row-clap .pad.accent    { filter: brightness(1.25); }
 .row-tom .pad.accent     { filter: brightness(1.25); }
 .row-rimshot .pad.accent { filter: brightness(1.25); }
@@ -476,6 +490,13 @@ body {
     0 0 12px rgba(46, 204, 113, 0.8),
     0 0 30px rgba(46, 204, 113, 0.5),
     0 0 50px rgba(46, 204, 113, 0.2),
+    inset 0 0 12px rgba(255, 255, 255, 0.25);
+}
+.row-openhat .pad.active.current-step {
+  box-shadow:
+    0 0 12px rgba(241, 196, 15, 0.8),
+    0 0 30px rgba(241, 196, 15, 0.5),
+    0 0 50px rgba(241, 196, 15, 0.2),
     inset 0 0 12px rgba(255, 255, 255, 0.25);
 }
 .row-clap .pad.active.current-step {
@@ -770,6 +791,7 @@ body {
 .instrument-row:nth-child(4) { animation-delay: 0.14s; }
 .instrument-row:nth-child(5) { animation-delay: 0.17s; }
 .instrument-row:nth-child(6) { animation-delay: 0.20s; }
+.instrument-row:nth-child(7) { animation-delay: 0.23s; }
 
 /* === SCANLINE TEXTURE (subtle CRT feel) === */
 #app::before {
