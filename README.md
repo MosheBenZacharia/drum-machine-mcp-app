@@ -2,11 +2,21 @@
 
 An interactive drum machine and step sequencer that runs as an [MCP App](https://github.com/modelcontextprotocol/ext-apps) inside Claude Desktop and other MCP-enabled hosts.
 
-6 synthesized instruments (kick, snare, hi-hat, clap, tom, rimshot) on a 16-step grid with playback, BPM control, swing, and volume. All audio is generated via [Tone.js](https://tonejs.github.io/) synthesis — no samples needed.
+7 synthesized instruments (kick, snare, hi-hat, open hi-hat, clap, tom, rimshot) on a 16-step grid with genre presets, solo/mute, velocity accents, and a live oscilloscope. All audio is generated via [Tone.js](https://tonejs.github.io/) synthesis — no samples needed.
 
 ![Drum Machine Demo](DrumMachineDemo.gif)
 
-## Quick Start
+## Try It
+
+Add as a remote MCP connector in Claude Desktop:
+
+```
+https://web-production-89abb.up.railway.app/mcp
+```
+
+Go to **Settings > MCP Servers > Add custom connector**, paste the URL, then ask Claude to "play a drum pattern".
+
+## Local Development
 
 ```bash
 npm install
@@ -64,14 +74,14 @@ This is an MCP App — an extension to the Model Context Protocol that pairs too
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `bpm` | number | 120 | Tempo (40-200) |
-| `pattern` | object | boom-bap beat | 6 instruments x 16 boolean steps |
+| `pattern` | object | boom-bap beat | 7 instruments x 16 boolean steps |
 | `swing` | number | 0 | Shuffle amount (0-1) |
 
 Supports streaming input via `ontoolinputpartial` — the grid updates live as the LLM generates tool arguments.
 
 ## Tech Stack
 
-- **Audio**: Tone.js (CDN) — MembraneSynth, NoiseSynth, MetalSynth
+- **Audio**: Tone.js (CDN) — MembraneSynth, NoiseSynth
 - **UI**: Vanilla JS + CSS
 - **Build**: Vite + vite-plugin-singlefile
 - **MCP**: @modelcontextprotocol/sdk + @modelcontextprotocol/ext-apps
