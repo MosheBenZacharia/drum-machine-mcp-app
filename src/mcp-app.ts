@@ -577,6 +577,7 @@ function loadPreset(name: string) {
 
 // --- Load Pattern Data (from MCP tool) ---
 function loadPattern(data: PatternData) {
+  presetSelect.value = "custom";
   if (data.bpm != null) setBPM(data.bpm);
   if (data.swing != null) setSwing(data.swing);
   if (data.pattern) {
