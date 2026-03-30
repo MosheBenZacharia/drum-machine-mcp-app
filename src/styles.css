@@ -1,0 +1,672 @@
+/* ============================================================
+   DRUM MACHINE — Dark Neon Glow Aesthetic
+   Inspired by vintage hardware sequencers meets cyberpunk arcade
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+/* --- Design Tokens --- */
+:root {
+  /* Surface */
+  --bg-void: #050508;
+  --bg-body: #0a0a0f;
+  --bg-panel: #0e0e18;
+  --bg-cell: #12122a;
+  --bg-cell-hover: #1a1a3a;
+  --bg-beat-group: rgba(255, 255, 255, 0.02);
+
+  /* Instrument Neon Palette */
+  --neon-kick:    #e74c3c;
+  --neon-snare:   #f39c12;
+  --neon-hihat:   #2ecc71;
+  --neon-clap:    #9b59b6;
+  --neon-tom:     #3498db;
+  --neon-rimshot: #1abc9c;
+
+  /* Dim versions (inactive pads) */
+  --dim-kick:    #3d1418;
+  --dim-snare:   #3d2a0a;
+  --dim-hihat:   #0e3d1e;
+  --dim-clap:    #2a1738;
+  --dim-tom:     #0e2238;
+  --dim-rimshot: #0a3028;
+
+  /* UI Chrome */
+  --text-primary: #e8e6f0;
+  --text-dim: #6a6880;
+  --text-label: #8884a0;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-glow: rgba(255, 255, 255, 0.1);
+
+  /* Playhead */
+  --playhead-glow: rgba(255, 255, 255, 0.12);
+  --playhead-line: rgba(255, 255, 255, 0.35);
+
+  /* Spacing */
+  --pad-gap: 4px;
+  --pad-size: 44px;
+  --label-width: 72px;
+  --radius-pad: 5px;
+  --radius-panel: 12px;
+}
+
+/* --- Reset & Base --- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: 'Share Tech Mono', 'SF Mono', 'Fira Code', monospace;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#app {
+  width: 100%;
+  max-width: 860px;
+  background: var(--bg-body);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  overflow: hidden;
+  box-shadow:
+    0 0 60px rgba(0, 0, 0, 0.8),
+    0 0 120px rgba(100, 80, 200, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* === HEADER === */
+#header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-subtle);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.header-title {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #fff 0%, #a8a4c0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+  position: relative;
+}
+
+.header-title::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+/* BPM Control */
+.bpm-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bpm-btn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border-glow);
+  border-radius: 4px;
+  background: var(--bg-cell);
+  color: var(--text-primary);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.bpm-btn:hover {
+  background: var(--bg-cell-hover);
+  border-color: rgba(255,255,255,0.2);
+}
+
+.bpm-btn:active {
+  transform: scale(0.92);
+}
+
+.bpm-display {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  min-width: 48px;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(255,255,255,0.3);
+}
+
+.control-label {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-left: 2px;
+}
+
+/* Swing Control */
+.swing-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* === SEQUENCER GRID === */
+#sequencer-grid {
+  padding: 16px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pad-gap);
+  position: relative;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(100, 80, 200, 0.03) 0%, transparent 60%),
+    var(--bg-body);
+}
+
+.instrument-row {
+  display: flex;
+  align-items: center;
+  gap: var(--pad-gap);
+}
+
+.instrument-label {
+  width: var(--label-width);
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 400;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-align: right;
+  padding-right: 8px;
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+/* Per-instrument label colors */
+.row-kick    .instrument-label { color: color-mix(in srgb, var(--neon-kick) 60%, var(--text-dim)); }
+.row-snare   .instrument-label { color: color-mix(in srgb, var(--neon-snare) 60%, var(--text-dim)); }
+.row-hihat   .instrument-label { color: color-mix(in srgb, var(--neon-hihat) 60%, var(--text-dim)); }
+.row-clap    .instrument-label { color: color-mix(in srgb, var(--neon-clap) 60%, var(--text-dim)); }
+.row-tom     .instrument-label { color: color-mix(in srgb, var(--neon-tom) 60%, var(--text-dim)); }
+.row-rimshot .instrument-label { color: color-mix(in srgb, var(--neon-rimshot) 60%, var(--text-dim)); }
+
+.steps-container {
+  display: grid;
+  grid-template-columns:
+    1fr 1fr 1fr 1fr
+    6px
+    1fr 1fr 1fr 1fr
+    6px
+    1fr 1fr 1fr 1fr
+    6px
+    1fr 1fr 1fr 1fr;
+  gap: var(--pad-gap);
+  flex: 1;
+  min-width: 0;
+}
+
+/* Invisible spacer columns for beat grouping */
+.pad-spacer {
+  width: 0;
+  pointer-events: none;
+}
+
+/* Beat group shading (beats 2 and 4 are slightly lighter) */
+.pad:nth-child(4n+3),
+.pad:nth-child(4n+4) {
+  /* Intentional: no visual change for odd beat groups, handled by border */
+}
+
+/* === PAD (individual step cell) === */
+.pad {
+  aspect-ratio: 1;
+  min-width: 0;
+  max-height: var(--pad-size);
+  border-radius: var(--radius-pad);
+  border: 1px solid transparent;
+  cursor: pointer;
+  position: relative;
+  transition:
+    background 0.12s ease,
+    box-shadow 0.12s ease,
+    border-color 0.12s ease,
+    transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.pad:hover {
+  transform: scale(1.08);
+  z-index: 2;
+}
+
+.pad:active {
+  transform: scale(0.94);
+}
+
+/* Beat grouping handled by grid column-gap in .steps-container */
+
+/* --- Inactive Pad States (per instrument) --- */
+.row-kick    .pad { background: var(--dim-kick);    border-color: rgba(231, 76, 60, 0.1); }
+.row-snare   .pad { background: var(--dim-snare);   border-color: rgba(243, 156, 18, 0.1); }
+.row-hihat   .pad { background: var(--dim-hihat);   border-color: rgba(46, 204, 113, 0.1); }
+.row-clap    .pad { background: var(--dim-clap);    border-color: rgba(155, 89, 182, 0.1); }
+.row-tom     .pad { background: var(--dim-tom);     border-color: rgba(52, 152, 219, 0.1); }
+.row-rimshot .pad { background: var(--dim-rimshot); border-color: rgba(26, 188, 156, 0.1); }
+
+/* --- Active Pad States (NEON GLOW) --- */
+.row-kick .pad.active {
+  background: var(--neon-kick);
+  border-color: var(--neon-kick);
+  box-shadow:
+    0 0 8px rgba(231, 76, 60, 0.6),
+    0 0 20px rgba(231, 76, 60, 0.3),
+    inset 0 0 8px rgba(255, 255, 255, 0.15);
+}
+
+.row-snare .pad.active {
+  background: var(--neon-snare);
+  border-color: var(--neon-snare);
+  box-shadow:
+    0 0 8px rgba(243, 156, 18, 0.6),
+    0 0 20px rgba(243, 156, 18, 0.3),
+    inset 0 0 8px rgba(255, 255, 255, 0.15);
+}
+
+.row-hihat .pad.active {
+  background: var(--neon-hihat);
+  border-color: var(--neon-hihat);
+  box-shadow:
+    0 0 8px rgba(46, 204, 113, 0.6),
+    0 0 20px rgba(46, 204, 113, 0.3),
+    inset 0 0 8px rgba(255, 255, 255, 0.15);
+}
+
+.row-clap .pad.active {
+  background: var(--neon-clap);
+  border-color: var(--neon-clap);
+  box-shadow:
+    0 0 8px rgba(155, 89, 182, 0.6),
+    0 0 20px rgba(155, 89, 182, 0.3),
+    inset 0 0 8px rgba(255, 255, 255, 0.15);
+}
+
+.row-tom .pad.active {
+  background: var(--neon-tom);
+  border-color: var(--neon-tom);
+  box-shadow:
+    0 0 8px rgba(52, 152, 219, 0.6),
+    0 0 20px rgba(52, 152, 219, 0.3),
+    inset 0 0 8px rgba(255, 255, 255, 0.15);
+}
+
+.row-rimshot .pad.active {
+  background: var(--neon-rimshot);
+  border-color: var(--neon-rimshot);
+  box-shadow:
+    0 0 8px rgba(26, 188, 156, 0.6),
+    0 0 20px rgba(26, 188, 156, 0.3),
+    inset 0 0 8px rgba(255, 255, 255, 0.15);
+}
+
+/* === PLAYHEAD (current step highlight) === */
+.pad.current-step {
+  box-shadow:
+    0 0 12px rgba(255, 255, 255, 0.15),
+    inset 0 0 12px rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.pad.current-step::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--radius-pad);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+}
+
+/* Active + current step: amplified neon */
+.row-kick .pad.active.current-step {
+  box-shadow:
+    0 0 12px rgba(231, 76, 60, 0.8),
+    0 0 30px rgba(231, 76, 60, 0.5),
+    0 0 50px rgba(231, 76, 60, 0.2),
+    inset 0 0 12px rgba(255, 255, 255, 0.25);
+}
+.row-snare .pad.active.current-step {
+  box-shadow:
+    0 0 12px rgba(243, 156, 18, 0.8),
+    0 0 30px rgba(243, 156, 18, 0.5),
+    0 0 50px rgba(243, 156, 18, 0.2),
+    inset 0 0 12px rgba(255, 255, 255, 0.25);
+}
+.row-hihat .pad.active.current-step {
+  box-shadow:
+    0 0 12px rgba(46, 204, 113, 0.8),
+    0 0 30px rgba(46, 204, 113, 0.5),
+    0 0 50px rgba(46, 204, 113, 0.2),
+    inset 0 0 12px rgba(255, 255, 255, 0.25);
+}
+.row-clap .pad.active.current-step {
+  box-shadow:
+    0 0 12px rgba(155, 89, 182, 0.8),
+    0 0 30px rgba(155, 89, 182, 0.5),
+    0 0 50px rgba(155, 89, 182, 0.2),
+    inset 0 0 12px rgba(255, 255, 255, 0.25);
+}
+.row-tom .pad.active.current-step {
+  box-shadow:
+    0 0 12px rgba(52, 152, 219, 0.8),
+    0 0 30px rgba(52, 152, 219, 0.5),
+    0 0 50px rgba(52, 152, 219, 0.2),
+    inset 0 0 12px rgba(255, 255, 255, 0.25);
+}
+.row-rimshot .pad.active.current-step {
+  box-shadow:
+    0 0 12px rgba(26, 188, 156, 0.8),
+    0 0 30px rgba(26, 188, 156, 0.5),
+    0 0 50px rgba(26, 188, 156, 0.2),
+    inset 0 0 12px rgba(255, 255, 255, 0.25);
+}
+
+/* === BEAT FLASH (triggered pad animation) === */
+@keyframes pad-flash {
+  0%   { filter: brightness(1.8); }
+  100% { filter: brightness(1); }
+}
+
+.pad.flash {
+  animation: pad-flash 0.12s ease-out;
+}
+
+/* === TRANSPORT BAR === */
+#transport {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.transport-btn {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 2px;
+  border: 1px solid var(--border-glow);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.play-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--bg-cell);
+  color: var(--text-primary);
+  border: 2px solid rgba(255,255,255,0.12);
+}
+
+.play-btn:hover {
+  border-color: rgba(255,255,255,0.25);
+  box-shadow: 0 0 20px rgba(255,255,255,0.08);
+}
+
+.play-btn:active {
+  transform: scale(0.93);
+}
+
+.play-btn.playing {
+  border-color: var(--neon-hihat);
+  box-shadow:
+    0 0 12px rgba(46, 204, 113, 0.3),
+    0 0 30px rgba(46, 204, 113, 0.1);
+  color: var(--neon-hihat);
+}
+
+.play-btn svg {
+  position: relative;
+  z-index: 1;
+}
+
+.clear-btn {
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--text-dim);
+  height: 36px;
+}
+
+.clear-btn:hover {
+  color: var(--neon-kick);
+  border-color: rgba(231, 76, 60, 0.3);
+  background: rgba(231, 76, 60, 0.06);
+}
+
+/* Volume */
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* === SLIDER (shared for swing + volume) === */
+.slider {
+  --fill: 0%;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 80px;
+  height: 24px;
+  background: transparent;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  background-image: linear-gradient(to right, var(--text-primary) 0%, var(--text-primary) var(--fill), var(--bg-cell) var(--fill), var(--bg-cell) 100%);
+  background-size: 100% 4px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  border: 2px solid var(--bg-panel);
+  box-shadow: 0 0 6px rgba(255,255,255,0.2);
+  cursor: pointer;
+  transition: box-shadow 0.15s ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 12px rgba(255,255,255,0.4);
+}
+
+.slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  border: 2px solid var(--bg-panel);
+  box-shadow: 0 0 6px rgba(255,255,255,0.2);
+  cursor: pointer;
+}
+
+/* === STEP INDICATORS (beat numbers) === */
+.step-indicators {
+  display: grid;
+  grid-template-columns:
+    1fr 1fr 1fr 1fr
+    6px
+    1fr 1fr 1fr 1fr
+    6px
+    1fr 1fr 1fr 1fr
+    6px
+    1fr 1fr 1fr 1fr;
+  gap: var(--pad-gap);
+  padding-left: calc(var(--label-width) + var(--pad-gap));
+  margin-bottom: 4px;
+}
+
+.step-indicators .step-num {
+  text-align: center;
+  font-size: 8px;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  font-family: 'Share Tech Mono', monospace;
+  min-width: 0;
+}
+
+.step-indicators .step-num:nth-child(1),
+.step-indicators .step-num:nth-child(6),
+.step-indicators .step-num:nth-child(11),
+.step-indicators .step-num:nth-child(16) {
+  color: var(--text-label);
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 640px) {
+  :root {
+    --pad-size: 32px;
+    --label-width: 48px;
+    --pad-gap: 3px;
+  }
+
+  #header {
+    padding: 12px 14px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-title {
+    font-size: 14px;
+    letter-spacing: 3px;
+  }
+
+  #sequencer-grid {
+    padding: 10px 8px 8px;
+  }
+
+  .instrument-label {
+    font-size: 7px;
+    letter-spacing: 1px;
+  }
+
+  #transport {
+    padding: 10px 14px;
+    flex-wrap: wrap;
+  }
+
+  .slider {
+    width: 60px;
+  }
+
+  .step-indicators {
+    padding-left: calc(var(--label-width) + var(--pad-gap));
+  }
+}
+
+@media (max-width: 420px) {
+  :root {
+    --pad-size: 24px;
+    --label-width: 36px;
+    --pad-gap: 2px;
+  }
+
+  .header-title {
+    font-size: 12px;
+  }
+
+  .bpm-display {
+    font-size: 16px;
+  }
+
+  .step-indicators .step-num {
+    font-size: 6px;
+  }
+}
+
+/* === ENTRANCE ANIMATION === */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#app {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.instrument-row {
+  animation: fadeInUp 0.35s ease-out backwards;
+}
+
+.instrument-row:nth-child(1) { animation-delay: 0.05s; }
+.instrument-row:nth-child(2) { animation-delay: 0.08s; }
+.instrument-row:nth-child(3) { animation-delay: 0.11s; }
+.instrument-row:nth-child(4) { animation-delay: 0.14s; }
+.instrument-row:nth-child(5) { animation-delay: 0.17s; }
+.instrument-row:nth-child(6) { animation-delay: 0.20s; }
+
+/* === SCANLINE TEXTURE (subtle CRT feel) === */
+#app::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 100;
+}
