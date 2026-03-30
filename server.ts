@@ -26,8 +26,13 @@ const DEFAULT_PATTERN = {
 
 export function createServer(): McpServer {
   const server = new McpServer({
-    name: "Drum Sequencer MCP App Server",
+    name: "Drum Machine",
     version: "1.0.0",
+    icons: [{
+      src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230a0a0f'/%3E%3Ccircle cx='50' cy='48' r='30' fill='none' stroke='%23e74c3c' stroke-width='3'/%3E%3Ccircle cx='50' cy='48' r='20' fill='none' stroke='%23f39c12' stroke-width='2'/%3E%3Ccircle cx='50' cy='48' r='10' fill='%232ecc71' opacity='0.8'/%3E%3Crect x='20' y='78' width='8' height='3' rx='1' fill='%233498db'/%3E%3Crect x='32' y='78' width='8' height='3' rx='1' fill='%239b59b6'/%3E%3Crect x='44' y='78' width='8' height='3' rx='1' fill='%232ecc71'/%3E%3Crect x='56' y='78' width='8' height='3' rx='1' fill='%23f39c12'/%3E%3Crect x='68' y='78' width='8' height='3' rx='1' fill='%23e74c3c'/%3E%3C/svg%3E",
+      mimeType: "image/svg+xml",
+      sizes: ["any"],
+    }],
   });
 
   const resourceUri = "ui://drum-sequencer/mcp-app.html";
