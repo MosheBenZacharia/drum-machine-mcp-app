@@ -599,6 +599,19 @@ body {
   background: rgba(231, 76, 60, 0.06);
 }
 
+.reset-btn {
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--text-dim);
+  height: 36px;
+}
+
+.reset-btn:hover {
+  color: var(--neon-tom);
+  border-color: rgba(52, 152, 219, 0.3);
+  background: rgba(52, 152, 219, 0.06);
+}
+
 /* Hint text */
 .hint-text {
   font-size: 8px;

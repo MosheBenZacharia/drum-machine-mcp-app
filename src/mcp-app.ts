@@ -137,6 +137,9 @@ let currentSwing = 0;
 let sequenceId: number | null = null;
 let anySoloed = false;
 
+// Snapshot of the custom pattern loaded from MCP tool (for reset)
+let customSnapshot: { bpm: number; swing: number; pattern: Record<InstrumentName, StepState[]> } | null = null;
+
 // --- DOM References ---
 const gridEl = document.getElementById("sequencer-grid")!;
 const playBtn = document.getElementById("play-btn")!;
@@ -556,6 +559,27 @@ function clearAll() {
   syncToModel();
 }
 
+function resetPattern() {
+  const selected = presetSelect.value;
+  if (selected === "custom") {
+    if (customSnapshot) {
+      setBPM(customSnapshot.bpm);
+      setSwing(customSnapshot.swing);
+      for (const inst of INSTRUMENTS) {
+        for (let s = 0; s < STEPS; s++) {
+          pattern[inst][s] = customSnapshot.pattern[inst][s];
+          if (padEls[inst][s]) {
+            applyPadState(padEls[inst][s], pattern[inst][s]);
+          }
+        }
+      }
+      syncToModel();
+    }
+  } else {
+    loadPreset(selected);
+  }
+}
+
 function loadPreset(name: string) {
   const preset = PRESETS[name];
   if (!preset) return;
@@ -585,7 +609,6 @@ function loadPattern(data: PatternData) {
       const steps = data.pattern[inst];
       if (Array.isArray(steps)) {
         for (let s = 0; s < STEPS; s++) {
-          // MCP sends booleans, convert to StepState
           pattern[inst][s] = steps[s] ? 1 : 0;
           if (padEls[inst][s]) {
             applyPadState(padEls[inst][s], pattern[inst][s]);
@@ -594,6 +617,12 @@ function loadPattern(data: PatternData) {
       }
     }
   }
+  // Save snapshot for reset
+  const snap: Record<InstrumentName, StepState[]> = {} as Record<InstrumentName, StepState[]>;
+  for (const inst of INSTRUMENTS) {
+    snap[inst] = [...pattern[inst]];
+  }
+  customSnapshot = { bpm: currentBPM, swing: currentSwing, pattern: snap };
 }
 
 // --- Event Listeners ---
@@ -607,6 +636,9 @@ playBtn.addEventListener("click", async () => {
 });
 
 clearBtn.addEventListener("click", clearAll);
+
+const resetBtn = document.getElementById("reset-btn")!;
+resetBtn.addEventListener("click", resetPattern);
 
 bpmDown.addEventListener("click", () => {
   setBPM(currentBPM - 5);
