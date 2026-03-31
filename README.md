@@ -8,13 +8,13 @@ An interactive drum machine and step sequencer that runs as an [MCP App](https:/
 
 ## Try It
 
-Add as a remote MCP connector in Claude Desktop:
-
-```
-https://web-production-89abb.up.railway.app/mcp
-```
-
-Go to **Settings > MCP Servers > Add custom connector**, paste the URL, then ask Claude to "play a drum pattern".
+1. In Claude Desktop, go to **Customize > Connectors**
+2. Click the **+** button and select **Add custom connector**
+3. Enter the name `Drum Machine` and the URL:
+   ```
+   https://web-production-89abb.up.railway.app/mcp
+   ```
+4. Start a new chat and ask Claude to "play a drum pattern"
 
 ## Local Development
 
